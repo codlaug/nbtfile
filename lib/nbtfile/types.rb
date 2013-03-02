@@ -165,6 +165,50 @@ module Types
     def to_s ; @value.dup ; end
     alias_method :to_str, :to_s
   end
+  
+  class IntArray
+    include Private::Base
+    include Enumerable
+
+    attr_reader :value
+
+    def initialize(value=[])
+      @value = []
+      for item in value
+        self << item
+      end
+    end
+    
+    def <<(item)
+      unless item.instance_of? Fixnum
+        raise TypeError, "Items should be instances of Fixnum"
+      end
+      @value << item
+      self
+    end
+    
+    def each
+      if block_given?
+        @value.each { |item| yield item }
+        self
+      else
+        @value.each
+      end
+    end
+
+    def to_a
+      @value.dup
+    end
+
+    def length
+      @value.length
+    end
+    alias_method :size, :length
+
+    def ==(other)
+      self.class == other.class && @value == other.to_a
+    end
+  end
 
   class List
     include Private::Base

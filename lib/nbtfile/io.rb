@@ -90,6 +90,15 @@ module ReadMethods
     value._nbtfile_force_encoding("BINARY")
     value
   end
+  
+  def read_int_array(io)
+    length = read_int(io)
+    value = []
+    for i in 1..length do
+      value << read_int(io)
+    end
+    value
+  end
 
   def read_list_header(io)
     list_type = read_type(io)
@@ -135,6 +144,8 @@ module ReadMethods
       value = list_type
     when type == TAG_Compound
       next_state = CompoundTokenizerState.new(state)
+    when type == TAG_Int_Array
+      value = read_int_array(io)
     end
 
     [next_state, type[name, value]]
@@ -183,6 +194,13 @@ module EmitMethods
     emit_int(io, value._nbtfile_bytesize)
     io.write(value)
   end
+  
+  def emit_int_array(io, value)
+    emit_int(io, value.length)
+    value.each do |i|
+      emit_int(io, i)
+    end
+  end
 
   def emit_string(io, value)
     value = value._nbtfile_encode("UTF-8")
@@ -230,6 +248,8 @@ module EmitMethods
       next_state = ListEmitterState.new(state, value, capturing)
     when type == TAG_Compound
       next_state = CompoundEmitterState.new(state, capturing)
+    when type == TAG_Int_Array
+      emit_int_array(io, value)
     when type == TAG_End
       next_state = cont
     else
