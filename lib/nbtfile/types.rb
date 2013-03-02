@@ -29,6 +29,10 @@ module Types
 
   module Private #:nodoc: all
   module Base
+    def is_homogeneous(array, type)
+      array.each { |i| return false unless i.instance_of?type }
+      return true
+    end
   end
 
   class BaseScalar
@@ -195,6 +199,27 @@ module Types
         @value.each
       end
     end
+    
+    def include?(obj)
+      @value.include? obj
+    end
+
+    def []=(index, value)
+      unless index.instance_of? ::Fixnum or index.instance_of? ::Range
+        raise TypeError, "Index must be a fixnum or range"
+      end
+      unless value.instance_of? ::Fixnum or (value.instance_of? ::Array and is_homogeneous(value, ::Fixnum))
+        raise TypeError, "Items should be instances of fixnum"
+      end
+      @value[index] = value
+      @value.reject! { |item| item == nil }
+      value
+    end
+
+    def [](index)
+      @value[index]
+    end
+    alias_method :slice, :[]
 
     def to_a
       @value.dup
@@ -241,6 +266,28 @@ module Types
       end
     end
 
+    def include?(obj)
+      @items.include? obj
+    end
+
+    def []=(index, value)
+      unless index.instance_of? ::Fixnum or index.instance_of? ::Range
+        raise TypeError, "Index must be a fixnum or range"
+      end
+      unless value.instance_of? @type or (value.instance_of? ::Array and is_homogeneous(value, @type)) or (value.instance_of? List and is_homogeneous(value.to_a, @type))
+        raise TypeError, "Items should be instances of #{@type}"
+      end
+      value = value.to_a if value.instance_of? List
+      @items[index] = value
+      @items.reject! { |item| item == nil }
+      value
+    end
+
+    def [](index)
+      @items[index]
+    end
+    alias_method :slice, :[]
+    
     def to_a
       @items.dup
     end
