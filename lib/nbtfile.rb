@@ -32,13 +32,14 @@ require 'nbtfile/io'
 require 'nbtfile/tokenizer'
 require 'nbtfile/emitter'
 require 'nbtfile/types'
+require 'nbtfile/region'
 
 module NBTFile
 
 # Produce a sequence of NBT tokens from a stream
-def self.tokenize(io, &block) #:yields: token
-  gz = Zlib::GzipReader.new(Private.coerce_to_io(io))
-  tokenize_uncompressed(gz, &block)
+def self.tokenize(io, compressed = true, &block) #:yields: token
+  io = Zlib::GzipReader.new(Private.coerce_to_io(io)) if compressed
+  tokenize_uncompressed(io, &block)
 end
 
 def self.tokenize_uncompressed(io) #:yields: token
@@ -67,11 +68,11 @@ end
 
 # Load an NBT file as a Ruby data structure; returns a pair containing
 # the name of the top-level compound tag and its value
-def self.load(io)
+def self.load(io, compressed = true)
   root = {}
   stack = [root]
 
-  self.tokenize(io) do |token|
+  self.tokenize(io, compressed) do |token|
     case token
     when Tokens::TAG_Compound
       value = {}
@@ -102,11 +103,11 @@ end
 
 # Reads an NBT stream as a data structure and returns a pair containing the
 # name of the top-level compound tag and its value.
-def self.read(io)
+def self.read(io, compressed = true)
   root = {}
   stack = [root]
 
-  self.tokenize(io) do |token|
+  self.tokenize(io, compressed) do |token|
     case token
     when Tokens::TAG_Byte
       value = Types::Byte.new(token.value)
@@ -259,6 +260,13 @@ end
 
 def self.write(io, name, body)
   emit(io) do |emitter|
+    writer = Private::Writer.new(emitter)
+    writer.write_pair(name, body)
+  end
+end
+
+def self.write_uncompressed(io, name, body)
+  emit_uncompressed(io) do |emitter|
     writer = Private::Writer.new(emitter)
     writer.write_pair(name, body)
   end

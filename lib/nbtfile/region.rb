@@ -70,17 +70,22 @@ class RegionFile
 
     def write_offset_table_entry(io, x, z, address, length)
       io.seek(chunk_to_file_offset(x, z))
+      raise RuntimError if io.pos != chunk_to_file_offset(x, z)
       info = (address << 8 | length)
-      io.write([info].pack("N"))
+      raise RuntimeError if io.write([info].pack("N")) != 4
     end
 
-    def update_chunk_timestamp(io, x, z)
+    def update_chunk_timestamp(io, x, z, t=Time.now.to_i)
+      return
       io.seek(TIMESTAMP_TABLE_OFFSET + chunk_to_file_offset(x, z))
-      io.write([Time.now.to_i].pack("N"))
+      raise RuntimError if io.pos != TIMESTAMP_TABLE_OFFSET + chunk_to_file_offset(x, z)
+      io.write([t].pack("N"))
     end
 
     def write_sectors(io, address, data)
       io.seek(address * SECTOR_SIZE)
+      raise RuntimeError if io.pos != address * SECTOR_SIZE
+      data += "\0" * (SECTOR_SIZE - (data.bytesize % SECTOR_SIZE)) unless data.bytesize % SECTOR_SIZE == 0
       io.write(data)
     end
   end
@@ -92,11 +97,14 @@ class RegionFile
     begin
       File.open(@filename, 'rb') do |stream|
         table = stream.read(Private::TABLE_SIZE)
+        return unless table != nil and table.bytesize == Private::TABLE_SIZE
         infos = table.unpack("N*")
         infos.each_with_index do |info, index|
           if info.nonzero?
             x, z = Private.table_index_to_chunk(index)
             @live_chunks.add [x, z]
+            address, length = Private.read_alloc_table_entry(stream, x, z)
+            @high_water_mark = address+length if address and address+length > @high_water_mark
           end
         end
       end
@@ -107,8 +115,23 @@ class RegionFile
   def live_chunks
     @live_chunks.dup
   end
-
+  
   def get_chunk(x, z)
+    payload = get_chunk_raw(x, z)
+    compression_type, compressed_data = payload.unpack("Ca*")
+    if compression_type != Private::DEFLATE_COMPRESSION
+      raise RuntimeError,
+            "Unsupported compression type #{compression_type}"
+    end
+    Zlib::Inflate.inflate(compressed_data)
+  end
+  
+  def get_chunk_node(x, z)
+    chunk = get_chunk(x, z)
+    NBTFile.read(chunk, false)[1]
+  end
+
+  def get_chunk_raw(x, z)
     begin
       File.open(@filename, "rb") do |stream|
         address, length = Private.read_alloc_table_entry(stream, x, z)
@@ -122,12 +145,7 @@ class RegionFile
         when payload.length > payload_length
           payload = payload[0, payload_length]
         end
-        compression_type, compressed_data = payload.unpack("Ca*")
-        if compression_type != Private::DEFLATE_COMPRESSION
-          raise RuntimeError,
-                "Unsupported compression type #{compression_type}"
-        end
-        Zlib::Inflate.inflate(compressed_data)
+        payload
       end
     rescue Errno::ENOENT
       nil
@@ -135,16 +153,37 @@ class RegionFile
   end
 
   def store_chunk(x, z, content)
+    compressed_data = Zlib::Deflate.deflate(content,
+                                            Zlib::DEFAULT_COMPRESSION)
+    payload = [Private::DEFLATE_COMPRESSION, compressed_data].pack("Ca*")
+    store_chunk_raw(x, z, payload)
+  end
+  
+  def store_chunk_node(x, z, node)
+    io = StringIO.new
+    NBTFile.write_uncompressed(io,"",node)
+    store_chunk(x, z, io.string)
+  end
+
+  def store_chunk_raw(x, z, content)
+    # initialize region file if needed
+    if @live_chunks.empty?
+      File.open(@filename, "w") do |stream|
+        stream.write("\0" * Private::DATA_START_OFFSET)
+      end
+    end
+    
     @live_chunks.add [x, z]
-    File.open(@filename, "w+b") do |stream|
-      compressed_data = Zlib::Deflate.deflate(content,
-                                              Zlib::DEFAULT_COMPRESSION)
-      payload_length = compressed_data.length + 1
-      payload = [payload_length, Private::DEFLATE_COMPRESSION,
-                 compressed_data].pack("NCa*")
+    File.open(@filename, "r+b") do |stream|
+      payload = [content.bytesize, content].pack("Na*")
       length = Private.length_in_sectors(payload.length)
-      address = @high_water_mark
-      @high_water_mark += length
+      address, old_length = Private.read_alloc_table_entry(stream, x, z)
+      if address == nil or length > old_length
+        # new chunk, or it won't fit in the currently allocated space
+        # TODO: find space in unallocated blocks
+        address = @high_water_mark
+        @high_water_mark += length
+      end
       Private.write_sectors(stream, address, payload)
       Private.write_offset_table_entry(stream, x, z, address, length)
       Private.update_chunk_timestamp(stream, x, z)
@@ -157,14 +196,29 @@ class RegionFile
     if @live_chunks.empty?
       begin
         File.unlink(@filename)
+        @high_water_mark = Private::DATA_START_SECTOR
       rescue Errno::ENOENT
       end
     else
-      File.open(@filename, "w+b") do |stream|
+      File.open(@filename, "r+b") do |stream|
         Private.write_offset_table_entry(stream, x, z, 0, 0)
-        Private.update_chunk_timestamp(stream, x, z)
+        Private.update_chunk_timestamp(stream, x, z, 0)
       end
     end
+    self
+  end
+  
+  def defragment()
+    return self unless File.exists?@filename
+    # load chunks
+    chunks = Hash.new
+    @live_chunks.each { |x,z| chunks[[x,z]] = get_chunk_raw(x,z) }
+    # delete file
+    File.unlink(@filename)
+    @high_water_mark = Private::DATA_START_SECTOR
+    @live_chunks.clear
+    # new file
+    chunks.each { |xz, data| store_chunk_raw(xz[0], xz[1], data) }
     self
   end
 end
@@ -189,6 +243,7 @@ class RegionManager
 
     def get_region_filename_for_chunk(x, z)
       r_x, r_z = get_region_coords_for_chunk(x, z)
+      "r.#{r_x}.#{r_z}.mca" if File.exists?"r.#{r_x}.#{r_z}.mca"
       "r.#{r_x}.#{r_z}.mcr"
     end
   end
