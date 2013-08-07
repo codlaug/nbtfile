@@ -250,7 +250,7 @@ describe "NBTFile::emit_uncompressed" do
         writer.emit_token(token)
       end
     end
-    io.string.should == output
+    io.string.force_encoding('BINARY').should == output
   end
 end
 
