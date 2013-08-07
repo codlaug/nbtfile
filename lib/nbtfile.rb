@@ -147,12 +147,16 @@ def self.read(io)
         type = Types::List
       when tag == Tokens::TAG_Compound
         type = Types::Compound
+      when tag == Tokens::TAG_Int_Array
+        type = Types::IntArray
       else
         raise TypeError, "Unexpected list type #{token.value}"
       end
       value = Types::List.new(type)
     when Tokens::TAG_Compound
       value = Types::Compound.new
+    when Tokens::TAG_Int_Array
+      value = Types::IntArray.new(token.value)
     when Tokens::TAG_End
       stack.pop
       next
@@ -244,6 +248,8 @@ class Writer
         write_pair(k, v)
       end
       @emitter.emit_token(Tokens::TAG_End[nil, nil])
+    when Types::IntArray
+      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.values.map(&:value)])
     end
   end
 end

@@ -97,6 +97,13 @@ module ReadMethods
     [list_type, list_length]
   end
 
+  def read_int_array(io)
+    length = read_int(io)
+    values = []
+    length.times{ values << read_int(io) }
+    return values
+  end
+
   def read_type(io)
     byte = read_byte(io)
     begin
@@ -135,6 +142,8 @@ module ReadMethods
       value = list_type
     when type == TAG_Compound
       next_state = CompoundTokenizerState.new(state)
+    when type == TAG_Int_Array
+      value = read_int_array(io)
     end
 
     [next_state, type[name, value]]
@@ -202,6 +211,11 @@ module EmitMethods
     emit_int(io, count)
   end
 
+  def emit_int_array(io, value)
+    emit_int(io, value.size)
+    value.each{|v| emit_int(io, v) }
+  end
+
   def emit_value(io, type, value, capturing, state, cont)
     next_state = state
 
@@ -232,6 +246,8 @@ module EmitMethods
       next_state = CompoundEmitterState.new(state, capturing)
     when type == TAG_End
       next_state = cont
+    when type == TAG_Int_Array
+      emit_int_array(io, value)
     else
       raise RuntimeError, "Unexpected token #{type}"
     end

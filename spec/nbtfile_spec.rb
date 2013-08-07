@@ -184,6 +184,18 @@ shared_examples_for "readers and writers" do
                         "bar" => Types::List.new(Types::List, [
                           Types::List.new(Types::Byte,
                                           [Types::Byte.new(0x4a)])])})]
+
+  a_reader_or_writer "should handle int array fields",
+                     "\x0a\x00\x03foo" \
+                     "\x0b\x00\x03bar\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02" \
+                     "\x00",
+                     [Tokens::TAG_Compound["foo", nil],
+                      Tokens::TAG_Int_Array["bar", [0x1, 0x2]],
+                      Tokens::TAG_End["", nil]],
+                     ["foo",
+                      Types::Compound.new({
+                        "bar" => Types::IntArray.new([0x1, 0x2])})]
+
 end
 
 describe "NBTFile::tokenize" do
