@@ -9,5 +9,5 @@ Gem::Specification.new do |s|
   s.date              = '2013-11-27'
   s.summary           = 'Gem for parsing NBT file format (Minecraft)'
   s.require_paths     = %w(lib)
-  s.files             = Dir["{app,config,db,lib}/**/*"] + ["readme.md"]
+  s.files             = Dir["{app,config,db,lib}/**/*"] + ["readme.rdoc"]
 end
