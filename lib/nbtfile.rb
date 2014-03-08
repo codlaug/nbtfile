@@ -37,8 +37,10 @@ module NBTFile
 
 # Produce a sequence of NBT tokens from a stream
 def self.tokenize(io, &block) #:yields: token
-  gz = Zlib::GzipReader.new(Private.coerce_to_io(io))
-  tokenize_uncompressed(gz, &block)
+  tokenize_compressed(io, &block)
+rescue  Zlib::GzipFile::Error => e
+  io.rewind
+  tokenize_uncompressed(io, &block)
 end
 
 def self.tokenize_uncompressed(io) #:yields: token
@@ -48,6 +50,11 @@ def self.tokenize_uncompressed(io) #:yields: token
   else
     reader
   end
+end
+
+def self.tokenize_compressed(io, &block)
+  gz = Zlib::GzipReader.new(Private.coerce_to_io(io))
+  tokenize_uncompressed(gz, &block)
 end
 
 # Emit NBT tokens to a stream
