@@ -149,6 +149,8 @@ def self.read(io)
         type = Types::Compound
       when tag == Tokens::TAG_Int_Array
         type = Types::IntArray
+      when tag == Tokens::TAG_End
+        type = Types::End
       else
         raise TypeError, "Unexpected list type #{token.value}"
       end
@@ -211,6 +213,8 @@ class Writer
       token = Tokens::TAG_List
     when type == Types::Compound
       token = Tokens::TAG_Compound
+    when type == Types::End
+      token = Tokens::TAG_End
     else
       raise TypeError, "Unexpected list type #{type}"
     end

@@ -292,6 +292,13 @@ module Types
       self.class == other.class && @values == other.values
     end
   end
-end
 
+  class End
+    include Private::Base
+
+    def ==(other)
+      self.class == other.class && @values == other.values
+    end
+  end
+end
 end
