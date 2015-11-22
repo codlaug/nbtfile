@@ -19,7 +19,7 @@ describe NBTFile do
     input_digest = Digest::SHA1.hexdigest(input_bytes)
     output_digest = Digest::SHA1.hexdigest(output_bytes)
 
-    output_digest.should == input_digest
+    expect(output_digest).to eq(input_digest)
   end
 
   def self.check_file(file)

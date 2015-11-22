@@ -1,14 +1,14 @@
 shared_examples_for "high-level types" do
   it "should include NBTFile::Types::Base" do
-    @type.should < NBTFile::Types::Base
+    expect(@type).to be < NBTFile::Types::Base
   end
 end
 
 INTEGER_TYPE_CASES = {
-  NBTFile::Types::Byte => 8,
-  NBTFile::Types::Short => 16,
-  NBTFile::Types::Int => 32,
-  NBTFile::Types::Long => 64
+    NBTFile::Types::Byte => 8,
+    NBTFile::Types::Short => 16,
+    NBTFile::Types::Int => 32,
+    NBTFile::Types::Long => 64
 }
 
 INTEGER_TYPE_CASES.each do |type, bits|
@@ -21,11 +21,11 @@ INTEGER_TYPE_CASES.each do |type, bits|
     end
 
     it "should reject values larger than #{range.end}" do
-      lambda { type.new(range.end+1) }.should raise_error(RangeError)
+      expect(lambda { type.new(range.end+1) }).to raise_error(RangeError)
     end
 
     it "should reject values smaller than #{range.begin}" do
-      lambda { type.new(range.begin - 1) }.should raise_error(RangeError)
+      expect(lambda { type.new(range.begin - 1) }).to raise_error(RangeError)
     end
 
     it "should accept integers" do
@@ -33,26 +33,26 @@ INTEGER_TYPE_CASES.each do |type, bits|
     end
 
     it "should have a value attribute" do
-      type.new(42).value.should == 42
+      expect(type.new(42).value).to eq(42)
     end
 
     it "should reject non-integers" do
-      lambda { type.new(0.5) }.should raise_error(TypeError)
+      expect(lambda { type.new(0.5) }).to raise_error(TypeError)
     end
 
     it "should support #to_int" do
-      type.new(3).to_int.should == 3
+      expect(type.new(3).to_int).to eq(3)
     end
 
     it "should support #to_i" do
-      type.new(3).to_i.should == 3
+      expect(type.new(3).to_i).to eq(3)
     end
 
     it "should support equality by value" do
-      type.new(3).should == 3
-      type.new(3).should_not == 4
-      type.new(3).should == type.new(3)
-      type.new(3).should_not == type.new(4)
+      expect(type.new(3)).to eq(3)
+      expect(type.new(3)).to_not eq(4)
+      expect(type.new(3)).to eq(type.new(3))
+      expect(type.new(3)).to_not eq(type.new(4))
     end
   end
 end
@@ -65,22 +65,22 @@ shared_examples_for "floating-point high-level types" do
   end
 
   it "should not accept non-numerics" do
-    lambda { @type.new("3.3") }.should raise_error(TypeError)
+    expect(lambda { @type.new("3.3") }).to raise_error(TypeError)
   end
 
   it "should have a value attribute" do
-    @type.new(3.3).value.should == 3.3
+    expect(@type.new(3.3).value).to eq(3.3)
   end
 
   it "should support #to_f" do
-    @type.new(3.3).to_f.should == 3.3
+    expect(@type.new(3.3).to_f).to eq(3.3)
   end
 
   it "should support equality by value" do
-    @type.new(3.3).should == 3.3
-    @type.new(3.3).should_not == 4
-    @type.new(3.3).should == @type.new(3.3)
-    @type.new(3.3).should_not == @type.new(4)
+    expect(@type.new(3.3)).to eq(3.3)
+    expect(@type.new(3.3)).to_not eq(4)
+    expect(@type.new(3.3)).to eq(@type.new(3.3))
+    expect(@type.new(3.3)).to_not eq(@type.new(4))
   end
 end
 
@@ -110,11 +110,11 @@ describe NBTFile::Types::String do
   end
 
   it "should have a #value accessor" do
-    NBTFile::Types::String.new("foo").value.should == "foo"
+    expect(NBTFile::Types::String.new("foo").value).to eq("foo")
   end
 
   it "should support #to_s" do
-    NBTFile::Types::String.new("foo").to_s.should == "foo"
+    expect(NBTFile::Types::String.new("foo").to_s).to eq("foo")
   end
 end
 
@@ -126,7 +126,7 @@ describe NBTFile::Types::ByteArray do
   end
 
   it "should have a #value accessor" do
-    NBTFile::Types::ByteArray.new("foo").value.should == "foo"
+    expect(NBTFile::Types::ByteArray.new("foo").value).to eq("foo")
   end
 end
 
@@ -143,24 +143,24 @@ describe NBTFile::Types::List do
 
   it "should accept instances of the given type" do
     @instance << NBTFile::Types::Int.new(3)
-    @instance.length.should == 1
+    expect(@instance.length).to eq(1)
   end
 
   it "should reject instances of other types" do
-    lambda {
+    expect(lambda {
       @instance << NBTFile::Types::Byte.new(3)
-    }.should raise_error(TypeError)
-    lambda {
+    }).to raise_error(TypeError)
+    expect(lambda {
       @instance << 3
-    }.should raise_error(TypeError)
-    lambda {
+    }).to raise_error(TypeError)
+    expect(lambda {
       @instance << nil
-    }.should raise_error(TypeError)
-    @instance.length.should == 0
+    }).to raise_error(TypeError)
+    expect(@instance.length).to eq(0)
   end
 
   it "should implement Enumerable" do
-    NBTFile::Types::List.should < Enumerable
+    expect(NBTFile::Types::List).to be < Enumerable
   end
 end
 
@@ -177,14 +177,14 @@ describe NBTFile::Types::Compound do
 
   it "should allow setting and retrieving a field" do
     @instance["foo"] = NBTFile::Types::Int.new(3)
-    @instance["foo"].should == NBTFile::Types::Int.new(3)
+    expect(@instance["foo"]).to eq(NBTFile::Types::Int.new(3))
   end
 
   it "should allow removing a field" do
     @instance["foo"] = NBTFile::Types::Int.new(3)
     @instance.delete "foo"
     @instance.delete "foo"
-    @instance["foo"].should be_nil
+    expect(@instance["foo"]).to be_nil
   end
 
   it "should accept values deriving from NBTFile::Types::Base" do
@@ -192,7 +192,7 @@ describe NBTFile::Types::Compound do
   end
 
   it "should reject values not deriving from NBTFile::Types::Base" do
-    lambda { @instance["foo"] = 3 }.should raise_error(TypeError)
+    expect(lambda { @instance["foo"] = 3 }).to raise_error(TypeError)
   end
 end
 
@@ -204,8 +204,7 @@ describe NBTFile::Types::IntArray do
   end
 
   it "should have a #values accessor" do
-    NBTFile::Types::IntArray.new([1, 2]).values.should ==
-      [Types::Int.new(1), Types::Int.new(2)]
+    expect(NBTFile::Types::IntArray.new([1, 2]).values).to eq([Types::Int.new(1), Types::Int.new(2)])
   end
 end
 

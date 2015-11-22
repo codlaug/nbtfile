@@ -37,8 +37,7 @@ task :specs => :spec
 
 task :default => :spec
 
-require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
+RSpec::Core::RakeTask.new(:features) do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
   rdoc.main = 'README.rdoc'
