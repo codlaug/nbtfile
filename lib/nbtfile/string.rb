@@ -1,7 +1,7 @@
 # nbtfile/string
 #
 # Copyright (c) 2011 MenTaLguY
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -9,10 +9,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -31,13 +31,15 @@ class String #:nodoc: all
   begin
     alias_method :_nbtfile_force_encoding, :force_encoding
   rescue NameError
-    def _nbtfile_force_encoding(encoding) ; end
+    def _nbtfile_force_encoding(encoding); end
   end
 
   begin
     alias_method :_nbtfile_encode, :encode
   rescue NameError
-    def _nbtfile_encode(encoding) ; dup ; end
+    def _nbtfile_encode(_encoding)
+      dup
+    end
   end
 
   begin
@@ -52,12 +54,10 @@ class String #:nodoc: all
     require 'iconv'
 
     def _nbtfile_valid_encoding?
-      begin
-        Iconv.conv("UTF-8", "UTF-8", self)
-        true
-      rescue Iconv::IllegalSequence
-        false
-      end
+      Iconv.conv('UTF-8', 'UTF-8', self)
+      true
+    rescue Iconv::IllegalSequence
+      false
     end
   end
 end

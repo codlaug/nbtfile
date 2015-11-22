@@ -11,7 +11,7 @@ describe NBTFile do
 
   def perform_and_check_roundtrip(file)
     input = StringIO.new(File.read(file))
-    output = StringIO.new()
+    output = StringIO.new
     yield input, output
     input_bytes = unzip_string(input.string)
     output_bytes = unzip_string(output.string)

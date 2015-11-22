@@ -1,7 +1,7 @@
 # nbtfile/tokenizer
 #
 # Copyright (c) 2010-2011 MenTaLguY
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -9,10 +9,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -25,102 +25,99 @@ require 'zlib'
 require 'stringio'
 require 'yaml'
 
-require 'nbtfile/string'
-require 'nbtfile/exceptions'
-require 'nbtfile/tokens'
-require 'nbtfile/io'
+require_relative 'string'
+require_relative 'exceptions'
+require_relative 'tokens'
+require_relative 'io'
 
 module NBTFile
-module Private #:nodoc: all
+  module Private #:nodoc: all
+    class TopTokenizerState
+      include ReadMethods
+      include Tokens
 
-class TopTokenizerState
-  include ReadMethods
-  include Tokens
-
-  def get_token(io)
-    type = read_type(io)
-    raise RuntimeError, "expected TAG_Compound, got #{type}" unless type == TAG_Compound
-    name = read_string(io)
-    end_state = EndTokenizerState.new()
-    next_state = CompoundTokenizerState.new(end_state)
-    [next_state, type[name, nil]]
-  end
-end
-
-class CompoundTokenizerState
-  include ReadMethods
-  include Tokens
-
-  def initialize(cont)
-    @cont = cont
-  end
-
-  def get_token(io)
-    type = read_type(io)
-
-    if type != TAG_End
-      name = read_string(io)
-    else
-      name = ""
+      def get_token(io)
+        type = read_type(io)
+        fail "expected TAG_Compound, got #{type}" unless type == TAG_Compound
+        name = read_string(io)
+        end_state = EndTokenizerState.new
+        next_state = CompoundTokenizerState.new(end_state)
+        [next_state, type[name, nil]]
+      end
     end
 
-    read_value(io, type, name, self, @cont)
-  end
-end
+    class CompoundTokenizerState
+      include ReadMethods
+      include Tokens
 
-class ListTokenizerState
-  include ReadMethods
-  include Tokens
+      def initialize(cont)
+        @cont = cont
+      end
 
-  def initialize(cont, type, length)
-    @cont = cont
-    @length = length
-    @offset = 0
-    @type = type
-  end
+      def get_token(io)
+        type = read_type(io)
 
-  def get_token(io)
-    if @offset < @length
-      type = @type
-    else
-      type = TAG_End
+        if type != TAG_End
+          name = read_string(io)
+        else
+          name = ''
+        end
+
+        read_value(io, type, name, self, @cont)
+      end
     end
 
-    index = @offset
-    @offset += 1
+    class ListTokenizerState
+      include ReadMethods
+      include Tokens
 
-    read_value(io, type, index, self, @cont)
-  end
-end
+      def initialize(cont, type, length)
+        @cont = cont
+        @length = length
+        @offset = 0
+        @type = type
+      end
 
-class EndTokenizerState
-  def get_token(io)
-    [self, nil]
-  end
-end
+      def get_token(io)
+        if @offset < @length
+          type = @type
+        else
+          type = TAG_End
+        end
 
-end
+        index = @offset
+        @offset += 1
 
-class Tokenizer
-  include Enumerable
+        read_value(io, type, index, self, @cont)
+      end
+    end
 
-  def initialize(io)
-    @io = io
-    @state = Private::TopTokenizerState.new()
-  end
-
-  def each_token
-    while token = get_token()
-      yield token
+    class EndTokenizerState
+      def get_token(_io)
+        [self, nil]
+      end
     end
   end
 
-  def get_token
-    @state, token = @state.get_token(@io)
-    token
+  class Tokenizer
+    include Enumerable
+
+    def initialize(io)
+      @io = io
+      @state = Private::TopTokenizerState.new
+    end
+
+    def each_token
+      while token = get_token
+        yield token
+      end
+    end
+
+    def get_token
+      @state, token = @state.get_token(@io)
+      token
+    end
+
+    alias_method :each, :each_token
   end
-
-  alias each each_token
-end
-
 end

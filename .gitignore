@@ -21,3 +21,11 @@ pkg
 
 ## PROJECT::SPECIFIC
 nbtfile.gemspec
+.idea/.name
+.idea/.rakeTasks
+.idea/encodings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/nbtfile.iml
+.idea/workspace.xml
+vcs.xml
