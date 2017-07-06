@@ -150,6 +150,8 @@ def self.read(io, compressed = true)
         type = Types::Compound
       when tag == Tokens::TAG_Int_Array
         type = Types::IntArray
+      when tag == Tokens::TAG_End
+        type = Types::End
       else
         raise TypeError, "Unexpected list type #{token.value}"
       end
@@ -214,6 +216,8 @@ class Writer
       token = Tokens::TAG_Compound
     when type == Types::IntArray
       token == Tokens::TAG_Int_Array
+    when type == Types::End
+      token = Tokens::TAG_End
     else
       raise TypeError, "Unexpected list type #{type}"
     end
@@ -252,7 +256,7 @@ class Writer
       end
       @emitter.emit_token(Tokens::TAG_End[nil, nil])
     when Types::IntArray
-      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.value])
+      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.values.map(&:value)])
     end
   end
 end

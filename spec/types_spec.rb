@@ -195,3 +195,17 @@ describe NBTFile::Types::Compound do
     lambda { @instance["foo"] = 3 }.should raise_error(TypeError)
   end
 end
+
+describe NBTFile::Types::IntArray do
+  it_should_behave_like "high-level types"
+
+  before :all do
+    @type = NBTFile::Types::IntArray
+  end
+
+  it "should have a #values accessor" do
+    NBTFile::Types::IntArray.new([1, 2]).values.should ==
+      [Types::Int.new(1), Types::Int.new(2)]
+  end
+end
+
