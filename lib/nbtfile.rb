@@ -32,13 +32,14 @@ require 'nbtfile/io'
 require 'nbtfile/tokenizer'
 require 'nbtfile/emitter'
 require 'nbtfile/types'
+require 'nbtfile/region'
 
 module NBTFile
 
 # Produce a sequence of NBT tokens from a stream
-def self.tokenize(io, &block) #:yields: token
-  gz = Zlib::GzipReader.new(Private.coerce_to_io(io))
-  tokenize_uncompressed(gz, &block)
+def self.tokenize(io, compressed = true, &block) #:yields: token
+  io = Zlib::GzipReader.new(Private.coerce_to_io(io)) if compressed
+  tokenize_uncompressed(io, &block)
 end
 
 def self.tokenize_uncompressed(io) #:yields: token
@@ -67,11 +68,11 @@ end
 
 # Load an NBT file as a Ruby data structure; returns a pair containing
 # the name of the top-level compound tag and its value
-def self.load(io)
+def self.load(io, compressed = true)
   root = {}
   stack = [root]
 
-  self.tokenize(io) do |token|
+  self.tokenize(io, compressed) do |token|
     case token
     when Tokens::TAG_Compound
       value = {}
@@ -102,11 +103,11 @@ end
 
 # Reads an NBT stream as a data structure and returns a pair containing the
 # name of the top-level compound tag and its value.
-def self.read(io)
+def self.read(io, compressed = true)
   root = {}
   stack = [root]
 
-  self.tokenize(io) do |token|
+  self.tokenize(io, compressed) do |token|
     case token
     when Tokens::TAG_Byte
       value = Types::Byte.new(token.value)
@@ -147,12 +148,16 @@ def self.read(io)
         type = Types::List
       when tag == Tokens::TAG_Compound
         type = Types::Compound
+      when tag == Tokens::TAG_Int_Array
+        type = Types::IntArray
       else
         raise TypeError, "Unexpected list type #{token.value}"
       end
       value = Types::List.new(type)
     when Tokens::TAG_Compound
       value = Types::Compound.new
+    when Tokens::TAG_Int_Array
+      value = Types::IntArray.new(token.value)
     when Tokens::TAG_End
       stack.pop
       next
@@ -207,6 +212,8 @@ class Writer
       token = Tokens::TAG_List
     when type == Types::Compound
       token = Tokens::TAG_Compound
+    when type == Types::IntArray
+      token == Tokens::TAG_Int_Array
     else
       raise TypeError, "Unexpected list type #{type}"
     end
@@ -244,6 +251,8 @@ class Writer
         write_pair(k, v)
       end
       @emitter.emit_token(Tokens::TAG_End[nil, nil])
+    when Types::IntArray
+      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.value])
     end
   end
 end
@@ -251,6 +260,13 @@ end
 
 def self.write(io, name, body)
   emit(io) do |emitter|
+    writer = Private::Writer.new(emitter)
+    writer.write_pair(name, body)
+  end
+end
+
+def self.write_uncompressed(io, name, body)
+  emit_uncompressed(io) do |emitter|
     writer = Private::Writer.new(emitter)
     writer.write_pair(name, body)
   end
