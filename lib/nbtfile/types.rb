@@ -368,6 +368,28 @@ module Types
       self.class == other.class && @hash == other.to_hash
     end
   end
-end
 
+
+  class IntArray
+    include Private::Base
+
+    attr_reader :values
+
+    def initialize(values)
+      @values = values.map{|v| Int.new(v) }
+    end
+
+    def ==(other)
+      self.class == other.class && @values == other.values
+    end
+  end
+
+  class End
+    include Private::Base
+
+    def ==(other)
+      self.class == other.class && @values == other.values
+    end
+  end
+end
 end
