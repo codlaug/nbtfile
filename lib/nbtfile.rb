@@ -25,6 +25,7 @@ require 'zlib'
 require 'stringio'
 require 'yaml'
 
+require 'nbtfile/version'
 require 'nbtfile/string'
 require 'nbtfile/exceptions'
 require 'nbtfile/tokens'
@@ -167,6 +168,10 @@ def self.read(io, compressed = true)
         raise TypeError, "Unexpected list type #{token.value}"
       end
       value = Types::List.new(type)
+      # It makes no sense to have selected TAG_End for a non-empty list.
+      if type == Types::End and value.length != 0
+        raise TypeError, "Can't have a non-empty list of TAG_End objects."
+      end
     when Tokens::TAG_Compound
       value = Types::Compound.new
     when Tokens::TAG_Int_Array
@@ -226,7 +231,7 @@ class Writer
     when type == Types::Compound
       token = Tokens::TAG_Compound
     when type == Types::IntArray
-      token == Tokens::TAG_Int_Array
+      token = Tokens::TAG_Int_Array
     when type == Types::End
       token = Tokens::TAG_End
     else
@@ -267,7 +272,7 @@ class Writer
       end
       @emitter.emit_token(Tokens::TAG_End[nil, nil])
     when Types::IntArray
-      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.values.map(&:value)])
+      @emitter.emit_token(Tokens::TAG_Int_Array[name, value.value])
     end
   end
 end
