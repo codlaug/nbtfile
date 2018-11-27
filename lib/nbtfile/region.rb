@@ -118,6 +118,7 @@ class RegionFile
   
   def get_chunk(x, z)
     payload = get_chunk_raw(x, z)
+    return payload if payload.nil?
     compression_type, compressed_data = payload.unpack("Ca*")
     if compression_type != Private::DEFLATE_COMPRESSION
       raise RuntimeError,

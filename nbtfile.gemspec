@@ -1,20 +1,13 @@
-# encoding: UTF-8
-$:.push File.expand_path("../lib", __FILE__)
-Gem::Specification.new do |spec|
-  # ============
-  # = Defaults =
-  # ============
-  spec.name        = 'nbtfile'
-  spec.version     = '0.3.0'
-  spec.summary     = 'NBT file'
-  spec.description = 'Library for reading and writing NBT files (as used by Minecraft).'
-  spec.authors     = ['MenTaLguY']
-  spec.email       = 'gems@bmonkeys.net'
-  spec.homepage    = 'https://github.com/2called-chaos/nbtfile'
+# Encoding: UTF-8
 
-  # =========
-  # = Files =
-  # =========
-  spec.files      += Dir['lib/nbtfile.rb']
-  spec.files      += Dir['lib/nbtfile/*.rb']
+Gem::Specification.new do |s|
+  s.platform          = Gem::Platform::RUBY
+  s.name              = 'nbtfile'
+  s.version           = '0.3.0'
+  s.author            = 'Glenn Hoppe'
+  s.description       = 'Gem for parsing NBT file format (Minecraft)'
+  s.date              = '2013-11-27'
+  s.summary           = 'Gem for parsing NBT file format (Minecraft)'
+  s.require_paths     = %w(lib)
+  s.files             = Dir["{app,config,db,lib}/**/*"] + ["readme.rdoc"]
 end

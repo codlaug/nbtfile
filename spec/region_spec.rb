@@ -15,7 +15,7 @@ describe NBTFile::RegionFile do
   end
 
   it "does not immediately create an empty file" do
-    File.exists?(@region_filename).should be_false
+    File.exists?(@region_filename).should be_falsey
   end
 
   it "returns nil for non-existent chunks" do
@@ -35,7 +35,7 @@ describe NBTFile::RegionFile do
   it "creates the file after a chunk has been stored" do
     content = "foobar"
     @region_file.store_chunk(0, 0, content)
-    File.exists?(@region_filename).should be_true
+    File.exists?(@region_filename).should be_truthy
   end
 
   it "removes the file only after the last chunk is deleted" do
@@ -43,9 +43,9 @@ describe NBTFile::RegionFile do
     @region_file.store_chunk(0, 0, content)
     @region_file.store_chunk(1, 0, content)
     @region_file.delete_chunk(0, 0)
-    File.exists?(@region_filename).should be_true
+    File.exists?(@region_filename).should be_truthy
     @region_file.delete_chunk(1, 0)
-    File.exists?(@region_filename).should be_false
+    File.exists?(@region_filename).should be_falsey
   end
 
   it "persists data in the file" do
@@ -61,9 +61,9 @@ describe NBTFile::RegionFile do
     region_file2 = NBTFile::RegionFile.new(@region_filename)
     region_file2.store_chunk(1, 0, content)
     region_file2.delete_chunk(1, 0)
-    File.exists?(@region_filename).should be_true
+    File.exists?(@region_filename).should be_truthy
     region_file2.delete_chunk(0, 0)
-    File.exists?(@region_filename).should be_false
+    File.exists?(@region_filename).should be_falsey
   end
 
   it "can enumerate stored chunks" do
@@ -95,20 +95,20 @@ describe NBTFile::RegionManager do
   it "creates appropriate region files" do
     content = "foobar"
     @region_manager.store_chunk(0, 0, content)
-    File.exists?(File.join(@temp_dir, 'r.0.0.mcr')).should be_true
+    File.exists?(File.join(@temp_dir, 'r.0.0.mcr')).should be_truthy
     @region_manager.store_chunk(32, 32, content)
-    File.exists?(File.join(@temp_dir, 'r.1.1.mcr')).should be_true
+    File.exists?(File.join(@temp_dir, 'r.1.1.mcr')).should be_truthy
     @region_manager.store_chunk(-16, 64, content)
     @region_manager.store_chunk(-32, 64, content)
-    File.exists?(File.join(@temp_dir, 'r.-1.2.mcr')).should be_true
-    File.exists?(File.join(@temp_dir, 'r.-2.2.mcr')).should be_false
+    File.exists?(File.join(@temp_dir, 'r.-1.2.mcr')).should be_truthy
+    File.exists?(File.join(@temp_dir, 'r.-2.2.mcr')).should be_falsey
   end
 
   it "deletes chunks (idempotently)" do
     content = "foobar"
     @region_manager.store_chunk(0, 0, content)
     @region_manager.delete_chunk(0, 0)
-    File.exists?(File.join(@temp_dir, 'r.0.0.mcr')).should be_false
+    File.exists?(File.join(@temp_dir, 'r.0.0.mcr')).should be_falsey
     @region_manager.delete_chunk(0, 0)
   end
 end
