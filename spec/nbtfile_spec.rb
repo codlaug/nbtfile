@@ -211,7 +211,7 @@ shared_examples_for "readers and writers" do
 
 end
 
-describe "NBTFile::tokenize" do
+describe "NBTFile::tokenize (zipped input)" do
   include ZlibHelpers
 
   it_should_behave_like "readers and writers"
@@ -220,6 +220,36 @@ describe "NBTFile::tokenize" do
     io = make_zipped_stream(input)
     actual_tokens = []
     NBTFile.tokenize(io) do |token|
+      actual_tokens << token
+    end
+    actual_tokens.should == tokens
+  end
+end
+
+describe "NBTFile::tokenize (non-zipped input)" do
+  include ZlibHelpers
+
+  it_should_behave_like "readers and writers"
+
+  def check_reader_or_writer(input, tokens, tree)
+    io = StringIO.new(input, "rb")
+    actual_tokens = []
+    NBTFile.tokenize_uncompressed(io) do |token|
+      actual_tokens << token
+    end
+    actual_tokens.should == tokens
+  end
+end
+
+describe "NBTFile::tokenize_compressed" do
+  include ZlibHelpers
+
+  it_should_behave_like "readers and writers"
+
+  def check_reader_or_writer(input, tokens, tree)
+    io = make_zipped_stream(input)
+    actual_tokens = []
+    NBTFile.tokenize_compressed(io) do |token|
       actual_tokens << token
     end
     actual_tokens.should == tokens

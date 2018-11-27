@@ -39,7 +39,7 @@ class TopTokenizerState
 
   def get_token(io)
     type = read_type(io)
-    raise RuntimeError, "expected TAG_Compound" unless type == TAG_Compound
+    raise RuntimeError, "expected TAG_Compound, got #{type}" unless type == TAG_Compound
     name = read_string(io)
     end_state = EndTokenizerState.new()
     next_state = CompoundTokenizerState.new(end_state)
