@@ -100,6 +100,15 @@ module ReadMethods
     value
   end
 
+  def read_int_array(io)
+    length = read_int(io)
+    value = []
+    length.times do |i|
+      value[i] = read_int(io)
+    end
+    value
+  end
+
   def read_list_header(io)
     list_type = read_type(io)
     list_length = read_int(io)
@@ -206,6 +215,13 @@ module EmitMethods
     emit_int(io, value.length)
     value.each do |i|
       emit_int(io, i)
+    end
+  end
+
+  def emit_int_array(io, value)
+    emit_int(io, value.length)
+    value.each do |x|
+      emit_int(io, x)
     end
   end
 
