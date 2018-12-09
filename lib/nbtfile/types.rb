@@ -181,6 +181,7 @@ module Types
     include Enumerable
 
     attr_reader :value
+    alias_method :values, :value
 
     def initialize(value=[])
       @value = []
@@ -239,12 +240,6 @@ module Types
     def ==(other)
       self.class == other.class && @value == other.to_a
     end
-  end
-
-  class IntArray
-    include Private::Base
-
-    attr_reader :value
 
     def initialize(value)
       unless value.kind_of? Array
@@ -282,7 +277,7 @@ module Types
 
     def <<(item)
       unless item.instance_of? @type
-        raise TypeError, "Items should be instances of #{@type}"
+        raise TypeError, "Items should be instances of #{@type} but instead was #{item.class}"
       end
       @items << item
       self
@@ -397,21 +392,6 @@ module Types
 
     def ==(other)
       self.class == other.class && @hash == other.to_hash
-    end
-  end
-
-
-  class IntArray
-    include Private::Base
-
-    attr_reader :values
-
-    def initialize(values)
-      @values = values.map{|v| Int.new(v) }
-    end
-
-    def ==(other)
-      self.class == other.class && @values == other.values
     end
   end
 
