@@ -243,7 +243,7 @@ module Types
 
     def initialize(value)
       unless value.kind_of? Array
-        raise TypeError, "Array or array-like expected"
+        raise TypeError, "Array or array-like expected but got #{value.inspect}"
       end
       value.each do |v|
         unless v.kind_of? Integer
@@ -259,6 +259,9 @@ module Types
 
     def to_s ; @value.to_s ; end
     alias_method :to_str, :to_s
+  end
+
+  class LongArray < IntArray
   end
 
   class List

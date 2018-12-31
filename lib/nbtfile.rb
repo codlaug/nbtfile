@@ -162,6 +162,8 @@ def self.read(io, compressed = true)
         type = Types::Compound
       when tag == Tokens::TAG_Int_Array
         type = Types::IntArray
+      when tag == Tokens::TAG_Long_Array
+        type = Types::LongArray
       when tag == Tokens::TAG_End
         type = Types::End
       else
@@ -176,6 +178,8 @@ def self.read(io, compressed = true)
       value = Types::Compound.new
     when Tokens::TAG_Int_Array
       value = Types::IntArray.new(token.value)
+    when Tokens::TAG_Long_Array
+      value = Types::LongArray.new(token.value)
     when Tokens::TAG_End
       stack.pop
       next
@@ -232,6 +236,8 @@ class Writer
       token = Tokens::TAG_Compound
     when type == Types::IntArray
       token = Tokens::TAG_Int_Array
+    when type == Types::LongArray
+      token = Tokens::TAG_Long_Array
     when type == Types::End
       token = Tokens::TAG_End
     else
@@ -273,6 +279,8 @@ class Writer
       @emitter.emit_token(Tokens::TAG_End[nil, nil])
     when Types::IntArray
       @emitter.emit_token(Tokens::TAG_Int_Array[name, value.value])
+    when Types::LongArray
+      @emitter.emit_token(Tokens::TAG_Long_Array[name, value.value])
     end
   end
 end

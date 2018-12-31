@@ -39,7 +39,7 @@ end
 # two arguments, name and value, and corresponding accessors.
 module Tokens
   tag_names = %w(End Byte Short Int Long Float Double
-                 Byte_Array String List Compound Int_Array)
+                 Byte_Array String List Compound Int_Array Long_Array)
   tag_names.each_with_index do |tag_name, index|
     tag_name = "TAG_#{tag_name}"
     token_class = Class.new(Private::BaseToken)
@@ -72,6 +72,8 @@ module Tokens
   class TAG_Compound
   end
   class TAG_Int_Array
+  end
+  class TAG_Long_Array
   end
 end
 
